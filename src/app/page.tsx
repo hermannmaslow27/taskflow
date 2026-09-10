@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -21,6 +22,12 @@ import {
   FolderKanban,
   RotateCcw,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "TaskFlow — Plateforme Collaborative de Gestion de Projets & Tâches",
+  description:
+    "Organisez, planifiez et suivez vos projets en équipe avec TaskFlow. Tableaux Kanban dynamiques, vues calendrier, gestion documentaire et continuité hors-ligne garantie.",
+};
 
 export default function LandingPage() {
   return (

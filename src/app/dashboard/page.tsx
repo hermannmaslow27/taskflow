@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getProjectsAction, createProjectAction } from "@/actions/projects";
 import { DashboardClient } from "@/components/dashboard-client";
+
+export const metadata: Metadata = {
+  title: "Tableau de bord",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function DashboardPage() {
   const session = await auth();
