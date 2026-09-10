@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #F8FAFC;
+    --foreground: #0F172A;
+    --card: #FFFFFF;
+    --card-foreground: #0F172A;
+    --card-border: #E2E8F0;
+    --sidebar: #FFFFFF;
+    --sidebar-border: #E2E8F0;
+    --primary: #6366F1;
+    --primary-hover: #4F46E5;
+    --primary-foreground: #FFFFFF;
+    --muted: #64748B;
+    --muted-bg: #F1F5F9;
+    --accent: #EEF2FF;
+    --accent-foreground: #4338CA;
+    --ring: rgba(99, 102, 241, 0.4);
+  }
+
+  .dark {
+    --background: #090D16;
+    --foreground: #F8FAFC;
+    --card: #111827;
+    --card-foreground: #F8FAFC;
+    --card-border: #1F2937;
+    --sidebar: #0D131F;
+    --sidebar-border: #1E293B;
+    --primary: #6366F1;
+    --primary-hover: #818CF8;
+    --primary-foreground: #FFFFFF;
+    --muted: #94A3B8;
+    --muted-bg: #1E293B;
+    --accent: #1E1B4B;
+    --accent-foreground: #A5B4FC;
+    --ring: rgba(99, 102, 241, 0.5);
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.light .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* CMD Palette Styles */
+[cmdk-root] {
+  max-width: 640px;
+  width: 100%;
+}
+
+[cmdk-item][data-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
