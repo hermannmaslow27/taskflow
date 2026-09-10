@@ -12,6 +12,7 @@ import { TrashView } from "./views/trash-view";
 import { TaskDetailModal, type TaskDetailData } from "./task-detail-modal";
 import { NewProjectModal } from "./new-project-modal";
 import { InviteMemberModal } from "./invite-member-modal";
+import { ProfileModal } from "./profile-modal";
 import { getTasksAction, createTaskAction } from "@/actions/tasks";
 import { getProjectsAction } from "@/actions/projects";
 import { Plus, Sparkles, Filter } from "lucide-react";
@@ -45,6 +46,10 @@ export function DashboardClient({
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [isInviteMemberOpen, setIsInviteMemberOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Local user state (updates optimistically after profile save)
+  const [localUser, setLocalUser] = useState(initialUser);
 
   // Fetch tasks for active project
   const fetchTasks = useCallback(async () => {
@@ -117,8 +122,9 @@ export function DashboardClient({
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AppHeader
-        user={initialUser}
+        user={localUser}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
       />
 
       <OfflineIndicator />
@@ -246,6 +252,17 @@ export function DashboardClient({
         onSelectProject={(id) => {
           setActiveProjectId(id);
           setActiveView("kanban");
+        }}
+      />
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={localUser}
+        onUserUpdated={(updated) => {
+          setLocalUser((prev) => ({ ...prev, ...updated }));
+          setIsProfileOpen(false);
         }}
       />
     </div>

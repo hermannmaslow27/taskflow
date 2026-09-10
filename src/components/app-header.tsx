@@ -8,12 +8,13 @@ import {
   CheckCircle2,
   LogOut,
   Sparkles,
-  Command,
+  Settings,
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth";
 
 interface AppHeaderProps {
   onOpenCommandPalette: () => void;
+  onOpenProfile?: () => void;
   user?: {
     name?: string | null;
     email?: string | null;
@@ -21,7 +22,7 @@ interface AppHeaderProps {
   } | null;
 }
 
-export function AppHeader({ onOpenCommandPalette, user }: AppHeaderProps) {
+export function AppHeader({ onOpenCommandPalette, onOpenProfile, user }: AppHeaderProps) {
   const { theme, setTheme } = useTheme();
 
   return (
@@ -62,10 +63,25 @@ export function AppHeader({ onOpenCommandPalette, user }: AppHeaderProps) {
 
         {user && (
           <div className="flex items-center gap-3 pl-2 border-l border-card-border">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center">
-                {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-              </div>
+            <button
+              onClick={onOpenProfile}
+              title="Modifier le profil"
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-muted-bg border border-transparent hover:border-card-border transition cursor-pointer group"
+            >
+              {user.image ? (
+                <div
+                  className="w-8 h-8 rounded-full border-2 border-primary/30 group-hover:border-primary/60 transition"
+                  style={{
+                    backgroundImage: `url(${user.image})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center border-2 border-primary/30 group-hover:border-primary/60 transition">
+                  {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                </div>
+              )}
               <div className="hidden sm:flex flex-col text-left">
                 <span className="text-xs font-bold text-card-foreground leading-none">
                   {user.name || "Utilisateur"}
@@ -74,7 +90,8 @@ export function AppHeader({ onOpenCommandPalette, user }: AppHeaderProps) {
                   {user.email}
                 </span>
               </div>
-            </div>
+              <Settings className="hidden sm:block w-3.5 h-3.5 text-muted group-hover:text-primary transition ml-0.5" />
+            </button>
 
             <button
               onClick={() => logoutAction()}

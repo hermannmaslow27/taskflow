@@ -3,9 +3,9 @@
 import { db } from "@/db";
 import { users, projects, projectMembers } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { hashPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
-import { signIn, signOut } from "@/auth";
+import { signIn, signOut, auth } from "@/auth";
 
 export async function registerAction(input: RegisterInput) {
   const parsed = registerSchema.safeParse(input);
@@ -58,4 +58,77 @@ export async function registerAction(input: RegisterInput) {
 
 export async function logoutAction() {
   await signOut({ redirectTo: "/login" });
+}
+
+export async function updateProfileAction(input: {
+  name: string;
+  image?: string | null;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Non authentifié." };
+  }
+
+  const name = input.name.trim();
+  if (!name || name.length < 2) {
+    return { success: false, error: "Le nom doit contenir au moins 2 caractères." };
+  }
+  if (name.length > 60) {
+    return { success: false, error: "Le nom ne peut pas dépasser 60 caractères." };
+  }
+
+  try {
+    await db
+      .update(users)
+      .set({
+        name,
+        image: input.image ?? null,
+      })
+      .where(eq(users.id, session.user.id));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur updateProfileAction:", error);
+    return { success: false, error: "Impossible de mettre à jour le profil." };
+  }
+}
+
+export async function changePasswordAction(input: {
+  currentPassword: string;
+  newPassword: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Non authentifié." };
+  }
+
+  if (input.newPassword.length < 8) {
+    return { success: false, error: "Le nouveau mot de passe doit contenir au moins 8 caractères." };
+  }
+
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, session.user.id),
+    });
+
+    if (!user || !user.passwordHash) {
+      return { success: false, error: "Aucun mot de passe défini sur ce compte (connexion OAuth)." };
+    }
+
+    const isValid = await verifyPassword(input.currentPassword, user.passwordHash);
+    if (!isValid) {
+      return { success: false, error: "Mot de passe actuel incorrect." };
+    }
+
+    const newHash = await hashPassword(input.newPassword);
+    await db
+      .update(users)
+      .set({ passwordHash: newHash })
+      .where(eq(users.id, session.user.id));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur changePasswordAction:", error);
+    return { success: false, error: "Impossible de changer le mot de passe." };
+  }
 }
