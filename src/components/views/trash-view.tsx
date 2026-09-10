@@ -9,6 +9,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { restoreTaskAction, permanentDeleteTaskAction } from "@/actions/tasks";
+import { useConfirm } from "@/components/dialogs";
 
 interface TrashViewProps {
   deletedTasks: any[];
@@ -22,6 +23,7 @@ export function TrashView({
   onTasksChange,
 }: TrashViewProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleRestore = async (taskId: string) => {
     setLoadingId(taskId);
@@ -36,20 +38,24 @@ export function TrashView({
   };
 
   const handlePermanentDelete = async (taskId: string) => {
-    if (
-      confirm(
-        "Cette action est irréversible. Voulez-vous supprimer définitivement cette tâche ?"
-      )
-    ) {
-      setLoadingId(taskId);
-      try {
-        await permanentDeleteTaskAction(taskId);
-        onTasksChange();
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingId(null);
-      }
+    const ok = await confirm({
+      title: "Supprimer définitivement la tâche",
+      message:
+        "Cette action est irréversible. Toutes les données associées à cette tâche seront définitivement supprimées.",
+      confirmLabel: "Supprimer définitivement",
+      cancelLabel: "Annuler",
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    setLoadingId(taskId);
+    try {
+      await permanentDeleteTaskAction(taskId);
+      onTasksChange();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingId(null);
     }
   };
 
@@ -125,6 +131,7 @@ export function TrashView({
           </div>
         )}
       </div>
+      <ConfirmDialog />
     </div>
   );
 }

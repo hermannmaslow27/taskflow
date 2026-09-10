@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
@@ -18,10 +18,14 @@ import {
   AlertCircle,
   Eye,
   Edit3,
+  Paperclip,
 } from "lucide-react";
 import { updateTaskAction, deleteTaskAction } from "@/actions/tasks";
 import { createSubtaskAction, toggleSubtaskAction, deleteSubtaskAction } from "@/actions/subtasks";
 import { createCommentAction } from "@/actions/comments";
+import { getAttachmentsAction } from "@/actions/attachments";
+import { FileUploadZone } from "./file-upload-zone";
+import { useConfirm } from "./dialogs";
 import { syncEngine } from "@/lib/sync-client";
 
 interface SubtaskItem {
@@ -68,6 +72,7 @@ interface TaskDetailModalProps {
   availableTags?: TagItem[];
   onClose: () => void;
   onTaskUpdated?: () => void;
+  currentUserId?: string;
 }
 
 export function TaskDetailModal({
@@ -75,6 +80,7 @@ export function TaskDetailModal({
   availableTags = [],
   onClose,
   onTaskUpdated,
+  currentUserId = "",
 }: TaskDetailModalProps) {
   if (!task) return null;
 
@@ -97,6 +103,22 @@ export function TaskDetailModal({
   const [commentsList, setCommentsList] = useState<CommentItem[]>(task.comments || []);
   const [newCommentText, setNewCommentText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Custom confirm dialog
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  // Attachments state
+  const [attachments, setAttachments] = useState<any[]>([]);
+
+  const fetchAttachments = async () => {
+    const res = await getAttachmentsAction({ taskId: task.id });
+    if (res.success && res.data) setAttachments(res.data);
+  };
+
+  useEffect(() => {
+    fetchAttachments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task.id]);
 
   const handleSaveMainDetails = async () => {
     setIsSaving(true);
@@ -209,7 +231,13 @@ export function TaskDetailModal({
   };
 
   const handleDeleteTask = async () => {
-    if (confirm("Déplacer cette tâche vers la corbeille ?")) {
+    const ok = await confirm({
+      title: "Mettre à la corbeille ?",
+      message: "La tâche sera déplacée dans la corbeille. Vous pourrez la restaurer depuis la vue Corbeille.",
+      confirmLabel: "Mettre à la corbeille",
+      variant: "warning",
+    });
+    if (ok) {
       try {
         if (!navigator.onLine) {
           await syncEngine.queueMutation("task", "delete", { id: task.id });
@@ -531,6 +559,20 @@ export function TaskDetailModal({
               ))}
             </div>
           </div>
+
+          {/* Attachments Section */}
+          <div className="space-y-3 pt-2 border-t border-card-border">
+            <label className="text-xs font-medium text-muted uppercase tracking-wider flex items-center gap-1.5">
+              <Paperclip className="w-3.5 h-3.5" />
+              Fichiers joints ({attachments.length})
+            </label>
+            <FileUploadZone
+              taskId={task.id}
+              existingAttachments={attachments}
+              currentUserId={currentUserId}
+              onAttachmentsChange={fetchAttachments}
+            />
+          </div>
         </div>
 
         {/* Footer */}
@@ -552,6 +594,7 @@ export function TaskDetailModal({
           </button>
         </div>
       </div>
+      <ConfirmDialog />
     </div>
   );
 }

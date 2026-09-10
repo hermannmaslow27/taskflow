@@ -41,6 +41,9 @@ export function CommandPalette({
         e.preventDefault();
         setOpen((prev) => !prev);
       }
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
     };
 
     document.addEventListener("keydown", down);
@@ -50,9 +53,24 @@ export function CommandPalette({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start justify-center pt-24 px-4">
-      <div className="w-full max-w-xl bg-card border border-card-border rounded-xl shadow-2xl overflow-hidden animate-fade-in text-card-foreground">
-        <Command label="Palette de commandes" className="w-full">
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start justify-center pt-24 px-4"
+      onClick={() => setOpen(false)}
+    >
+      <div
+        className="w-full max-w-xl bg-card border border-card-border rounded-xl shadow-2xl overflow-hidden animate-fade-in text-card-foreground"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Command
+          label="Palette de commandes"
+          className="w-full"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              setOpen(false);
+            }
+          }}
+        >
           <div className="flex items-center border-b border-card-border px-3">
             <Search className="w-4 h-4 text-muted shrink-0 mr-2" />
             <Command.Input
@@ -60,6 +78,14 @@ export function CommandPalette({
               className="w-full py-3.5 bg-transparent text-sm outline-none placeholder:text-muted"
               autoFocus
             />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-[11px] font-medium px-2 py-0.5 rounded bg-muted-bg text-muted hover:text-card-foreground border border-card-border transition shrink-0 ml-2 cursor-pointer"
+              title="Fermer (Échap)"
+            >
+              Échap
+            </button>
           </div>
 
           <Command.List className="max-h-80 overflow-y-auto p-2 text-sm">

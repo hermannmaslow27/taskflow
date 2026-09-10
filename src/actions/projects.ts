@@ -143,6 +143,22 @@ export async function updateProjectAction(input: UpdateProjectInput) {
   }
 }
 
+export async function deleteProjectAction(projectId: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  try {
+    await assertProjectRole(session.user.id, projectId, "owner");
+    await db.delete(projects).where(eq(projects.id, projectId));
+    revalidateTag(`projects-${session.user.id}`, "default");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Impossible de supprimer le projet" };
+  }
+}
+
 export async function inviteMemberAction(input: InviteMemberInput) {
   const session = await auth();
   if (!session?.user?.id) {

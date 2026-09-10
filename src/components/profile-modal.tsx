@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useRef, useTransition } from "react";
 import {
   X,
   User,
@@ -13,6 +13,7 @@ import {
   EyeOff,
   Shield,
   Sparkles,
+  Upload,
 } from "lucide-react";
 import { updateProfileAction, changePasswordAction } from "@/actions/auth";
 
@@ -54,6 +55,9 @@ export function ProfileModal({
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]!.bg);
   const [customImageUrl, setCustomImageUrl] = useState(user.image || "");
   const [useCustomImage, setUseCustomImage] = useState(!!user.image);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileMsg, setProfileMsg] = useState<{
     type: "ok" | "err";
     text: string;
@@ -100,6 +104,28 @@ export function ProfileModal({
         setProfileMsg({ type: "err", text: res.error || "Erreur inconnue." });
       }
     });
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    setUploadError(null);
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", "taskflow/avatars");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error || "Upload échoué");
+      }
+      const { url } = await res.json();
+      setCustomImageUrl(url);
+      setUseCustomImage(true);
+    } catch (err: any) {
+      setUploadError(err.message || "Erreur d'upload");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handlePasswordChange = () => {
@@ -272,38 +298,48 @@ export function ProfileModal({
               </div>
             </div>
 
-            {/* Custom image URL */}
+            {/* Upload avatar button */}
             <div className="space-y-1.5">
-              <label
-                htmlFor="profile-image-url"
-                className="text-[10px] font-semibold text-muted uppercase tracking-wider"
-              >
-                URL d&apos;image personnalisée (optionnel)
+              <label className="text-[10px] font-semibold text-muted uppercase tracking-wider">
+                Photo de profil
               </label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-3">
                 <input
-                  id="profile-image-url"
-                  type="url"
-                  value={customImageUrl}
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
                   onChange={(e) => {
-                    setCustomImageUrl(e.target.value);
-                    if (e.target.value) setUseCustomImage(true);
+                    const f = e.target.files?.[0];
+                    if (f) handleAvatarUpload(f);
                   }}
-                  placeholder="https://exemple.com/photo.jpg"
-                  className="flex-1 bg-muted-bg border border-card-border rounded-xl px-3.5 py-2.5 text-xs text-card-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition"
                 />
-                {customImageUrl && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-card-border bg-muted-bg hover:bg-muted-bg/80 text-xs font-semibold text-card-foreground transition cursor-pointer disabled:opacity-50"
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  ) : (
+                    <Upload className="w-4 h-4 text-primary" />
+                  )}
+                  {isUploading ? "Upload en cours..." : "Choisir une image"}
+                </button>
+                {useCustomImage && customImageUrl && (
                   <button
-                    onClick={() => {
-                      setCustomImageUrl("");
-                      setUseCustomImage(false);
-                    }}
-                    className="px-3 rounded-xl border border-card-border text-muted hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                    onClick={() => { setCustomImageUrl(""); setUseCustomImage(false); }}
+                    className="p-2 rounded-xl border border-card-border text-muted hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
+              {uploadError && (
+                <p className="text-[10px] text-rose-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {uploadError}
+                </p>
+              )}
             </div>
 
             {/* Display Name */}

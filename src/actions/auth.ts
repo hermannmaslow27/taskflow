@@ -78,12 +78,14 @@ export async function updateProfileAction(input: {
   }
 
   try {
+    const updateData: { name: string; image?: string | null } = { name };
+    if (input.image !== undefined) {
+      updateData.image = input.image && input.image.trim() !== "" ? input.image.trim() : null;
+    }
+
     await db
       .update(users)
-      .set({
-        name,
-        image: input.image ?? null,
-      })
+      .set(updateData)
       .where(eq(users.id, session.user.id));
 
     return { success: true };

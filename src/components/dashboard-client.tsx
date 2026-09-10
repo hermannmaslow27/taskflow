@@ -13,9 +13,11 @@ import { TaskDetailModal, type TaskDetailData } from "./task-detail-modal";
 import { NewProjectModal } from "./new-project-modal";
 import { InviteMemberModal } from "./invite-member-modal";
 import { ProfileModal } from "./profile-modal";
+import { ProjectSettingsModal } from "./project-settings-modal";
+import { usePrompt, useConfirm } from "./dialogs";
 import { getTasksAction, createTaskAction } from "@/actions/tasks";
-import { getProjectsAction } from "@/actions/projects";
-import { Plus, Sparkles, Filter } from "lucide-react";
+import { getProjectsAction, deleteProjectAction } from "@/actions/projects";
+import { Plus } from "lucide-react";
 import { syncEngine } from "@/lib/sync-client";
 
 interface DashboardClientProps {
@@ -47,32 +49,37 @@ export function DashboardClient({
   const [isInviteMemberOpen, setIsInviteMemberOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [projectSettingsId, setProjectSettingsId] = useState<string | null>(null);
 
-  // Local user state (updates optimistically after profile save)
+  // Custom dialogs
+  const { prompt, PromptDialog } = usePrompt();
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  // Local user state
   const [localUser, setLocalUser] = useState(initialUser);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Fetch tasks for active project
+  useEffect(() => {
+    const stored = localStorage.getItem("sidebar-collapsed");
+    if (stored === "true") setIsSidebarCollapsed(true);
+  }, []);
+
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", String(next));
+      return next;
+    });
+  };
+
   const fetchTasks = useCallback(async () => {
     if (!activeProjectId) return;
-
     try {
-      // Active tasks
-      const activeRes = await getTasksAction({
-        projectId: activeProjectId,
-        includeDeleted: false,
-      });
-      if (activeRes.success && activeRes.data) {
-        setTasks(activeRes.data);
-      }
+      const activeRes = await getTasksAction({ projectId: activeProjectId, includeDeleted: false });
+      if (activeRes.success && activeRes.data) setTasks(activeRes.data);
 
-      // Trash / soft-deleted tasks
-      const deletedRes = await getTasksAction({
-        projectId: activeProjectId,
-        includeDeleted: true,
-      });
-      if (deletedRes.success && deletedRes.data) {
-        setDeletedTasks(deletedRes.data);
-      }
+      const deletedRes = await getTasksAction({ projectId: activeProjectId, includeDeleted: true });
+      if (deletedRes.success && deletedRes.data) setDeletedTasks(deletedRes.data);
     } catch (err) {
       console.error("Error fetching tasks:", err);
     }
@@ -81,9 +88,7 @@ export function DashboardClient({
   const fetchProjects = useCallback(async () => {
     try {
       const res = await getProjectsAction();
-      if (res.success && res.data) {
-        setProjects(res.data);
-      }
+      if (res.success && res.data) setProjects(res.data);
     } catch (err) {
       console.error(err);
     }
@@ -95,11 +100,33 @@ export function DashboardClient({
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
+  const handleDeleteProject = async (id: string) => {
+    const ok = await confirm({
+      title: "Supprimer le projet ?",
+      message: "Toutes les tâches, sous-tâches et commentaires seront supprimés définitivement. Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      variant: "danger",
+    });
+    if (!ok) return;
+    const res = await deleteProjectAction(id);
+    if (res.success) {
+      const remaining = projects.filter((p) => p.id !== id);
+      setProjects(remaining);
+      if (activeProjectId === id) {
+        setActiveProjectId(remaining[0]?.id || "");
+        setActiveView("kanban");
+      }
+    }
+  };
+
   const handleQuickNewTask = async () => {
     if (!activeProjectId) return;
-    const title = prompt("Titre de la nouvelle tâche :");
+    const title = await prompt({
+      title: "Nouvelle tâche",
+      placeholder: "Titre de la tâche...",
+      confirmLabel: "Créer",
+    });
     if (!title || !title.trim()) return;
-
     try {
       const payload = {
         projectId: activeProjectId,
@@ -107,7 +134,6 @@ export function DashboardClient({
         status: "todo" as const,
         priority: "medium" as const,
       };
-
       if (!navigator.onLine) {
         await syncEngine.queueMutation("task", "create", payload);
       } else {
@@ -123,8 +149,20 @@ export function DashboardClient({
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AppHeader
         user={localUser}
+        projects={projects}
+        activeProjectId={activeProjectId}
+        onSelectProject={(id) => {
+          setActiveProjectId(id);
+          setActiveView("kanban");
+        }}
+        activeView={activeView}
+        onSelectView={setActiveView}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenNewProject={() => setIsNewProjectOpen(true)}
+        onQuickNewTask={handleQuickNewTask}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={handleToggleSidebar}
       />
 
       <OfflineIndicator />
@@ -141,11 +179,14 @@ export function DashboardClient({
           onSelectView={setActiveView}
           onOpenNewProject={() => setIsNewProjectOpen(true)}
           onOpenInviteMember={() => setIsInviteMemberOpen(true)}
+          onDeleteProject={handleDeleteProject}
+          onOpenProjectSettings={(id) => setProjectSettingsId(id)}
           deletedTasksCount={deletedTasks.length}
+          collapsed={isSidebarCollapsed}
+          onToggleCollapse={handleToggleSidebar}
         />
 
         <main className="flex-1 overflow-y-auto p-6 flex flex-col">
-          {/* Project Title Bar & Controls */}
           {activeProject && (
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
@@ -175,57 +216,33 @@ export function DashboardClient({
             </div>
           )}
 
-          {/* Active View Container */}
           <div className="flex-1">
             {activeView === "kanban" && (
-              <KanbanView
-                tasks={tasks}
-                projectId={activeProjectId}
-                onTaskClick={(t) => setSelectedTask(t)}
-                onTasksChange={fetchTasks}
-              />
+              <KanbanView tasks={tasks} projectId={activeProjectId} onTaskClick={(t) => setSelectedTask(t)} onTasksChange={fetchTasks} />
             )}
-
             {activeView === "list" && (
-              <ListView
-                tasks={tasks}
-                projectId={activeProjectId}
-                onTaskClick={(t) => setSelectedTask(t)}
-                onTasksChange={fetchTasks}
-              />
+              <ListView tasks={tasks} projectId={activeProjectId} onTaskClick={(t) => setSelectedTask(t)} onTasksChange={fetchTasks} />
             )}
-
             {activeView === "calendar" && (
-              <CalendarView
-                tasks={tasks}
-                projectId={activeProjectId}
-                onTaskClick={(t) => setSelectedTask(t)}
-                onTasksChange={fetchTasks}
-              />
+              <CalendarView tasks={tasks} projectId={activeProjectId} onTaskClick={(t) => setSelectedTask(t)} onTasksChange={fetchTasks} />
             )}
-
             {activeView === "trash" && (
-              <TrashView
-                deletedTasks={deletedTasks}
-                projectId={activeProjectId}
-                onTasksChange={fetchTasks}
-              />
+              <TrashView deletedTasks={deletedTasks} projectId={activeProjectId} onTasksChange={fetchTasks} />
             )}
           </div>
         </main>
       </div>
 
-      {/* Task Detail Modal */}
       {selectedTask && (
         <TaskDetailModal
           task={selectedTask}
           availableTags={activeProject?.tags || []}
           onClose={() => setSelectedTask(null)}
           onTaskUpdated={fetchTasks}
+          currentUserId={localUser.id}
         />
       )}
 
-      {/* New Project Modal */}
       <NewProjectModal
         isOpen={isNewProjectOpen}
         onClose={() => setIsNewProjectOpen(false)}
@@ -235,7 +252,6 @@ export function DashboardClient({
         }}
       />
 
-      {/* Invite Member Modal */}
       <InviteMemberModal
         isOpen={isInviteMemberOpen}
         projectId={activeProjectId}
@@ -243,7 +259,6 @@ export function DashboardClient({
         onMemberInvited={fetchProjects}
       />
 
-      {/* Command Palette */}
       <CommandPalette
         onNewTaskClick={handleQuickNewTask}
         onNewProjectClick={() => setIsNewProjectOpen(true)}
@@ -255,7 +270,6 @@ export function DashboardClient({
         }}
       />
 
-      {/* Profile Modal */}
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
@@ -265,6 +279,17 @@ export function DashboardClient({
           setIsProfileOpen(false);
         }}
       />
+
+      <ProjectSettingsModal
+        isOpen={!!projectSettingsId}
+        onClose={() => setProjectSettingsId(null)}
+        project={projects.find((p) => p.id === projectSettingsId) ?? null}
+        currentUserId={localUser.id}
+      />
+
+      {/* Custom dialogs */}
+      <PromptDialog />
+      <ConfirmDialog />
     </div>
   );
 }

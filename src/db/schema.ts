@@ -168,9 +168,8 @@ export const comments = pgTable(
 // 9. Attachments Table
 export const attachments = pgTable("attachments", {
   id: text("id").primaryKey(),
-  taskId: text("task_id")
-    .notNull()
-    .references(() => tasks.id, { onDelete: "cascade" }),
+  taskId: text("task_id").references(() => tasks.id, { onDelete: "cascade" }),
+  projectId: text("project_id").references(() => projects.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
   fileName: text("file_name").notNull(),
   mimeType: text("mime_type").notNull(),
@@ -180,6 +179,7 @@ export const attachments = pgTable("attachments", {
     .references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
 
 // 10. Activity Logs Table
 export const activityLogs = pgTable(
@@ -290,11 +290,16 @@ export const attachmentsRelations = relations(attachments, ({ one }) => ({
     fields: [attachments.taskId],
     references: [tasks.id],
   }),
+  project: one(projects, {
+    fields: [attachments.projectId],
+    references: [projects.id],
+  }),
   uploadedBy: one(users, {
     fields: [attachments.uploadedById],
     references: [users.id],
   }),
 }));
+
 
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   task: one(tasks, {
