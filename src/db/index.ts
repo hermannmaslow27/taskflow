@@ -2,7 +2,12 @@ import { Pool, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import * as schema from "./schema";
 
-const connectionString = process.env.DATABASE_URL;
+const rawConnectionString = process.env.DATABASE_URL;
+const connectionString = rawConnectionString
+  ? rawConnectionString
+      .replace("&channel_binding=require", "")
+      .replace("?channel_binding=require", "")
+  : undefined;
 
 let dbInstance: ReturnType<typeof drizzle<typeof schema>>;
 
