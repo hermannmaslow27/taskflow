@@ -27,6 +27,30 @@ import { getAttachmentsAction } from "@/actions/attachments";
 import { FileUploadZone } from "./file-upload-zone";
 import { useConfirm } from "./dialogs";
 import { syncEngine } from "@/lib/sync-client";
+import { CustomSelect, type SelectOption } from "./custom-select";
+
+const TASK_STATUS_OPTIONS: SelectOption[] = [
+  { value: "backlog", label: "Backlog", badgeColor: "#94A3B8" },
+  { value: "todo", label: "À faire", badgeColor: "#60A5FA" },
+  { value: "in_progress", label: "En cours", badgeColor: "#F59E0B" },
+  { value: "in_review", label: "En révision", badgeColor: "#A855F7" },
+  { value: "done", label: "Terminé", badgeColor: "#10B981" },
+];
+
+const TASK_PRIORITY_OPTIONS: SelectOption[] = [
+  { value: "low", label: "Basse", badgeColor: "#10B981" },
+  { value: "medium", label: "Moyenne", badgeColor: "#F59E0B" },
+  { value: "high", label: "Haute", badgeColor: "#F97316" },
+  { value: "urgent", label: "Urgente", badgeColor: "#EF4444" },
+];
+
+const TASK_RECURRENCE_OPTIONS: SelectOption[] = [
+  { value: "", label: "Aucune" },
+  { value: "FREQ=DAILY;INTERVAL=1", label: "Chaque jour" },
+  { value: "FREQ=WEEKDAYS", label: "Jours ouvrés" },
+  { value: "FREQ=WEEKLY;INTERVAL=1", label: "Chaque semaine" },
+  { value: "FREQ=MONTHLY;INTERVAL=1", label: "Chaque mois" },
+];
 
 interface SubtaskItem {
   id: string;
@@ -312,32 +336,23 @@ export function TaskDetailModal({
             {/* Status */}
             <div>
               <label className="text-xs font-medium text-muted block mb-1">Statut</label>
-              <select
+              <CustomSelect
                 value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full bg-card border border-card-border rounded-lg px-2.5 py-1.5 text-xs text-card-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-              >
-                <option value="backlog">Backlog</option>
-                <option value="todo">À faire</option>
-                <option value="in_progress">En cours</option>
-                <option value="in_review">En révision</option>
-                <option value="done">Terminé</option>
-              </select>
+                onChange={(val) => setStatus(val as any)}
+                options={TASK_STATUS_OPTIONS}
+                size="sm"
+              />
             </div>
 
             {/* Priority */}
             <div>
               <label className="text-xs font-medium text-muted block mb-1">Priorité</label>
-              <select
+              <CustomSelect
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full bg-card border border-card-border rounded-lg px-2.5 py-1.5 text-xs text-card-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-              >
-                <option value="low">Basse</option>
-                <option value="medium">Moyenne</option>
-                <option value="high">Haute</option>
-                <option value="urgent">Urgente</option>
-              </select>
+                onChange={(val) => setPriority(val as any)}
+                options={TASK_PRIORITY_OPTIONS}
+                size="sm"
+              />
             </div>
 
             {/* Due Date */}
@@ -347,24 +362,19 @@ export function TaskDetailModal({
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full bg-card border border-card-border rounded-lg px-2.5 py-1.5 text-xs text-card-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-card border border-card-border rounded-lg px-2.5 py-1.5 text-xs text-card-foreground focus:outline-none focus:ring-1 focus:ring-primary h-[33px]"
               />
             </div>
 
             {/* Recurrence */}
             <div>
               <label className="text-xs font-medium text-muted block mb-1">Récurrence</label>
-              <select
+              <CustomSelect
                 value={recurrenceRule}
-                onChange={(e) => setRecurrenceRule(e.target.value)}
-                className="w-full bg-card border border-card-border rounded-lg px-2.5 py-1.5 text-xs text-card-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-              >
-                <option value="">Aucune</option>
-                <option value="FREQ=DAILY;INTERVAL=1">Chaque jour</option>
-                <option value="FREQ=WEEKDAYS">Jours ouvrés</option>
-                <option value="FREQ=WEEKLY;INTERVAL=1">Chaque semaine</option>
-                <option value="FREQ=MONTHLY;INTERVAL=1">Chaque mois</option>
-              </select>
+                onChange={setRecurrenceRule}
+                options={TASK_RECURRENCE_OPTIONS}
+                size="sm"
+              />
             </div>
           </div>
 

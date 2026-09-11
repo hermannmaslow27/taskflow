@@ -3,6 +3,25 @@
 import { useState } from "react";
 import { X, UserPlus, Shield } from "lucide-react";
 import { inviteMemberAction } from "@/actions/projects";
+import { CustomSelect, type SelectOption } from "./custom-select";
+
+const ROLE_OPTIONS: SelectOption[] = [
+  {
+    value: "viewer",
+    label: "Lecteur",
+    description: "Visualisation seule des tâches et du projet",
+  },
+  {
+    value: "editor",
+    label: "Éditeur",
+    description: "Création, modification et déplacement de tâches",
+  },
+  {
+    value: "owner",
+    label: "Propriétaire",
+    description: "Gestion complète du projet et des membres",
+  },
+];
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -103,18 +122,12 @@ export function InviteMemberModal({
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-muted block mb-1.5 uppercase tracking-wider">
-              Rôle RBAC
-            </label>
-            <select
+            <CustomSelect
+              label="Rôle RBAC"
               value={role}
-              onChange={(e) => setRole(e.target.value as any)}
-              className="w-full bg-muted-bg/50 border border-card-border rounded-xl px-3.5 py-2.5 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
-            >
-              <option value="viewer">Lecteur (Visualisation seule)</option>
-              <option value="editor">Éditeur (Création, modification, déplacement)</option>
-              <option value="owner">Propriétaire (Gestion du projet & membres)</option>
-            </select>
+              onChange={(val) => setRole(val as any)}
+              options={ROLE_OPTIONS}
+            />
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-card-border">

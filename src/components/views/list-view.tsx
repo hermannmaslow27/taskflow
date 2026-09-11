@@ -21,6 +21,24 @@ import {
 } from "lucide-react";
 import { updateTaskAction } from "@/actions/tasks";
 import { syncEngine } from "@/lib/sync-client";
+import { CustomSelect, type SelectOption } from "@/components/custom-select";
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: "all", label: "Tous les statuts" },
+  { value: "backlog", label: "Backlog", badgeColor: "#94A3B8" },
+  { value: "todo", label: "À faire", badgeColor: "#60A5FA" },
+  { value: "in_progress", label: "En cours", badgeColor: "#F59E0B" },
+  { value: "in_review", label: "En révision", badgeColor: "#A855F7" },
+  { value: "done", label: "Terminé", badgeColor: "#10B981" },
+];
+
+const PRIORITY_OPTIONS: SelectOption[] = [
+  { value: "all", label: "Toutes les priorités" },
+  { value: "low", label: "Basse", badgeColor: "#10B981" },
+  { value: "medium", label: "Moyenne", badgeColor: "#F59E0B" },
+  { value: "high", label: "Haute", badgeColor: "#F97316" },
+  { value: "urgent", label: "Urgente", badgeColor: "#EF4444" },
+];
 
 interface ListViewProps {
   tasks: any[];
@@ -258,31 +276,24 @@ export function ListView({
 
         <div className="flex items-center gap-2">
           {/* Status Filter */}
-          <select
+          <CustomSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-muted-bg/50 border border-card-border rounded-lg px-2.5 py-1.5 text-xs text-card-foreground cursor-pointer"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="backlog">Backlog</option>
-            <option value="todo">À faire</option>
-            <option value="in_progress">En cours</option>
-            <option value="in_review">En révision</option>
-            <option value="done">Terminé</option>
-          </select>
+            onChange={setStatusFilter}
+            options={STATUS_OPTIONS}
+            size="sm"
+            variant="filter"
+            className="w-36 sm:w-40"
+          />
 
           {/* Priority Filter */}
-          <select
+          <CustomSelect
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="bg-muted-bg/50 border border-card-border rounded-lg px-2.5 py-1.5 text-xs text-card-foreground cursor-pointer"
-          >
-            <option value="all">Toutes les priorités</option>
-            <option value="low">Basse</option>
-            <option value="medium">Moyenne</option>
-            <option value="high">Haute</option>
-            <option value="urgent">Urgente</option>
-          </select>
+            onChange={setPriorityFilter}
+            options={PRIORITY_OPTIONS}
+            size="sm"
+            variant="filter"
+            className="w-36 sm:w-44"
+          />
         </div>
       </div>
 
