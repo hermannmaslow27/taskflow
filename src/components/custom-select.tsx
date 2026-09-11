@@ -41,7 +41,6 @@ export function CustomSelect<T extends string = string>({
 
   const selectedOption = options.find((opt) => opt.value === value);
 
-  // Close on outside click or Escape
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -77,23 +76,22 @@ export function CustomSelect<T extends string = string>({
       : "bg-card border border-card-border shadow-xs text-card-foreground hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20";
 
   return (
-    <div className={`relative ${className}`} ref={containerRef}>
+    // Ajout de isolation-auto ou z-index pour forcer le passage au-dessus du dialog
+    <div className={`relative inline-block w-full ${className}`} ref={containerRef}>
       {label && (
         <label className="text-xs font-semibold text-muted block mb-1.5 uppercase tracking-wider">
           {label}
         </label>
       )}
 
-      {/* Trigger Button */}
       <button
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full flex items-center justify-between transition-all select-none cursor-pointer outline-none ${sizeClasses} ${variantClasses} ${
-          disabled ? "opacity-50 cursor-not-allowed" : ""
-        } ${isOpen ? "ring-2 ring-primary/30 border-primary" : ""}`}
+        className={`w-full flex items-center justify-between transition-all select-none cursor-pointer outline-none ${sizeClasses} ${variantClasses} ${disabled ? "opacity-50 cursor-not-allowed" : ""
+          } ${isOpen ? "ring-2 ring-primary/30 border-primary" : ""}`}
       >
         <div className="flex items-center gap-2 truncate text-left">
           {selectedOption?.badgeColor && (
@@ -111,17 +109,15 @@ export function CustomSelect<T extends string = string>({
         </div>
 
         <ChevronDown
-          className={`w-3.5 h-3.5 text-muted transition-transform duration-200 shrink-0 ml-1.5 ${
-            isOpen ? "rotate-180 text-primary" : ""
-          }`}
+          className={`w-3.5 h-3.5 text-muted transition-transform duration-200 shrink-0 ml-1.5 ${isOpen ? "rotate-180 text-primary" : ""
+            }`}
         />
       </button>
 
-      {/* Floating Dropdown */}
       {isOpen && (
         <div
           role="listbox"
-          className={`absolute left-0 mt-1.5 w-full min-w-[160px] bg-card border border-card-border rounded-xl shadow-xl p-1 z-50 animate-fade-in overflow-hidden ${dropdownClassName}`}
+          className={`absolute left-0 top-full mt-1.5 w-full min-w-[160px] bg-card border border-card-border rounded-xl shadow-2xl p-1 z-[999] animate-fade-in overflow-hidden ${dropdownClassName}`}
         >
           <div className="max-h-56 overflow-y-auto space-y-0.5">
             {options.map((option) => {
@@ -136,11 +132,10 @@ export function CustomSelect<T extends string = string>({
                     onChange(option.value);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer text-left ${
-                    isSelected
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer text-left ${isSelected
                       ? "bg-primary/10 text-primary font-bold"
                       : "text-card-foreground hover:bg-muted-bg"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2 truncate">
                     {option.badgeColor && (

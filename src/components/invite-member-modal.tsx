@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, UserPlus, Shield } from "lucide-react";
+import { X, UserPlus } from "lucide-react";
 import { inviteMemberAction } from "@/actions/projects";
 import { CustomSelect, type SelectOption } from "./custom-select";
 
@@ -78,7 +78,8 @@ export function InviteMemberModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-card border border-card-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-fade-in">
+      {/* CORRECTION ICI : Remplacement de overflow-hidden par overflow-visible */}
+      <div className="bg-card border border-card-border rounded-2xl w-full max-w-md shadow-2xl overflow-visible animate-fade-in">
         <div className="flex items-center justify-between px-6 py-4 border-b border-card-border">
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-primary" />
@@ -114,7 +115,7 @@ export function InviteMemberModal({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="collaborateur@taskflow.dev"
+              placeholder="assistance@taskflow.laslow.site"
               className="w-full bg-muted-bg/50 border border-card-border rounded-xl px-3.5 py-2.5 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               autoFocus
               required
