@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { users, projects, projectMembers, passwordResetTokens } from "@/db/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { sendPasswordResetEmail } from "@/lib/email";
 import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import { signIn, signOut, auth } from "@/auth";
 
@@ -173,9 +174,18 @@ export async function requestPasswordResetOtpAction(email: string) {
       expiresAt,
     });
 
-    console.log(
-      `\n========================================\n[TaskFlow OTP] Code pour ${normalizedEmail} : ${otp}\n(Valable 15 minutes)\n========================================\n`
-    );
+    const emailResult = await sendPasswordResetEmail(normalizedEmail, otp);
+    if (!emailResult.success) {
+      return {
+        success: false,
+        error: "Erreur lors de l'envoi de l'e-mail. Veuillez réessayer.",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Un code de validation à 6 chiffres a été envoyé.",
+    };
 
     return {
       success: true,

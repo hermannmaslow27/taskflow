@@ -171,23 +171,20 @@ export function ForgotPasswordWizard() {
       {step !== "SUCCESS" && (
         <div className="flex items-center justify-center gap-2 pt-1 pb-2">
           <div
-            className={`w-8 h-1.5 rounded-full transition-all duration-300 ${
-              step === "EMAIL" || step === "OTP" || step === "NEW_PASSWORD"
+            className={`w-8 h-1.5 rounded-full transition-all duration-300 ${step === "EMAIL" || step === "OTP" || step === "NEW_PASSWORD"
                 ? "bg-primary"
                 : "bg-muted-bg"
-            }`}
+              }`}
           />
           <div
-            className={`w-8 h-1.5 rounded-full transition-all duration-300 ${
-              step === "OTP" || step === "NEW_PASSWORD"
+            className={`w-8 h-1.5 rounded-full transition-all duration-300 ${step === "OTP" || step === "NEW_PASSWORD"
                 ? "bg-primary"
                 : "bg-muted-bg"
-            }`}
+              }`}
           />
           <div
-            className={`w-8 h-1.5 rounded-full transition-all duration-300 ${
-              step === "NEW_PASSWORD" ? "bg-primary" : "bg-muted-bg"
-            }`}
+            className={`w-8 h-1.5 rounded-full transition-all duration-300 ${step === "NEW_PASSWORD" ? "bg-primary" : "bg-muted-bg"
+              }`}
           />
         </div>
       )}
@@ -204,27 +201,6 @@ export function ForgotPasswordWizard() {
         <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs rounded-xl flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 shrink-0 text-primary" />
           <span>{infoMsg}</span>
-        </div>
-      )}
-
-      {/* Dev OTP Helper */}
-      {devOtp && step === "OTP" && (
-        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs space-y-1">
-          <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-            <Check className="w-3.5 h-3.5" /> Code OTP de test :
-          </span>
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-base font-black tracking-widest text-emerald-300">
-              {devOtp}
-            </span>
-            <button
-              type="button"
-              onClick={() => setOtp(devOtp.split(""))}
-              className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
-            >
-              Remplir automatiquement
-            </button>
-          </div>
         </div>
       )}
 

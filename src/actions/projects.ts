@@ -14,6 +14,7 @@ import {
   type InviteMemberInput,
 } from "@/lib/validations/project";
 import { revalidateTag } from "next/cache";
+import { sendProjectInvitationEmail } from "@/lib/email";
 
 export async function getProjectsAction() {
   const session = await auth();
@@ -171,7 +172,12 @@ export async function inviteMemberAction(input: InviteMemberInput) {
   }
 
   try {
-    await assertProjectRole(session.user.id, parsed.data.projectId, "owner");
+    const roleCheck = await assertProjectRole(session.user.id, parsed.data.projectId, "owner");
+
+    // Récupérer le nom du projet et de l'utilisateur qui invite pour le mail
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, parsed.data.projectId),
+    });
 
     const invitedUser = await db.query.users.findFirst({
       where: eq(users.email, parsed.data.email.toLowerCase()),
@@ -181,7 +187,6 @@ export async function inviteMemberAction(input: InviteMemberInput) {
       return { success: false, error: "Aucun utilisateur trouvé avec cette adresse email." };
     }
 
-    // Check if already member
     const existing = await db.query.projectMembers.findFirst({
       where: and(
         eq(projectMembers.projectId, parsed.data.projectId),
@@ -198,6 +203,16 @@ export async function inviteMemberAction(input: InviteMemberInput) {
       userId: invitedUser.id,
       role: parsed.data.role,
     });
+
+    // Envoyer l'e-mail d'invitation
+    if (project) {
+      await sendProjectInvitationEmail({
+        to: invitedUser.email,
+        projectName: project.name,
+        inviterName: session.user.name || "Un utilisateur",
+        role: parsed.data.role,
+      });
+    }
 
     revalidateTag(`project-${parsed.data.projectId}`, "default");
     return { success: true };

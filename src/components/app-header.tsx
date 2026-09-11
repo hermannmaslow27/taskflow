@@ -48,7 +48,6 @@ export function AppHeader({
 
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Monitor online status
   useEffect(() => {
     setIsOnline(navigator.onLine);
     const handleOnline = () => setIsOnline(true);
@@ -62,7 +61,6 @@ export function AppHeader({
     };
   }, []);
 
-  // Close menus on outside click or Escape
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -89,7 +87,6 @@ export function AppHeader({
 
   return (
     <header className="h-14 border-b border-card-border/70 bg-card/85 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 select-none">
-      {/* LEFT: Brand Logo & Active Project Name (clean, non-redundant) */}
       <div className="flex items-center gap-2.5 min-w-0">
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-xs">
@@ -116,7 +113,6 @@ export function AppHeader({
         )}
       </div>
 
-      {/* CENTER: Command Palette Search Bar (clickable) */}
       <div className="flex items-center justify-center flex-1 max-w-sm mx-4">
         <button
           type="button"
@@ -134,7 +130,6 @@ export function AppHeader({
         </button>
       </div>
 
-      {/* RIGHT: Quick Task + Clean Profile Avatar */}
       <div className="flex items-center gap-2.5 shrink-0">
         {onQuickNewTask && (
           <button
@@ -148,23 +143,19 @@ export function AppHeader({
           </button>
         )}
 
-        {/* Profile Avatar with status dot */}
         {user && (
           <div className="relative" ref={userMenuRef}>
             <button
               type="button"
               onClick={() => setIsUserMenuOpen((v) => !v)}
-              className="relative p-0.5 rounded-full hover:ring-2 hover:ring-primary/40 transition cursor-pointer"
+              className="relative p-0.5 rounded-full hover:ring-2 hover:ring-primary/40 transition cursor-pointer flex items-center justify-center"
               title="Menu utilisateur"
             >
               {user.image ? (
-                <div
-                  className="w-7 h-7 rounded-full border border-card-border"
-                  style={{
-                    backgroundImage: `url(${user.image})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
+                <img
+                  src={user.image}
+                  alt={user.name || "Avatar"}
+                  className="w-7 h-7 rounded-full border border-card-border object-cover"
                 />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center border border-card-border">
@@ -172,11 +163,9 @@ export function AppHeader({
                 </div>
               )}
 
-              {/* Status indicator dot */}
               <span
-                className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-2 ring-card ${
-                  isOnline ? "bg-emerald-400" : "bg-amber-400"
-                }`}
+                className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ring-2 ring-card ${isOnline ? "bg-emerald-400" : "bg-amber-400"
+                  }`}
                 title={isOnline ? "En ligne" : "Hors-ligne"}
               />
             </button>
