@@ -250,6 +250,8 @@ export function DashboardClient({
       />
 
       <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
         onNewTaskClick={handleQuickNewTask}
         onNewProjectClick={() => setIsNewProjectOpen(true)}
         onSelectView={setActiveView}
