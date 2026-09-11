@@ -50,7 +50,7 @@ export async function sendProjectInvitationEmail({
           <h2 style="color: #18181b;">Invitation à un projet</h2>
           <p style="color: #3f3f46;"><strong>${inviterName}</strong> vous a invité à rejoindre le projet <strong>${projectName}</strong> en tant que <strong>${roleLabel}</strong>.</p>
           <div style="margin: 25px 0;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/projects" style="background: #6366f1; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Accéder au projet</a>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard" style="background: #6366f1; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Accéder au projet</a>
           </div>
           <p style="color: #71717a; font-size: 14px;">Si vous n'avez pas de compte ou si vous ne connaissez pas cette personne, vous pouvez ignorer cet e-mail.</p>
         </div>
