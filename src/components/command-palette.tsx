@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 
 interface CommandPaletteProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   onNewTaskClick?: () => void;
   onNewProjectClick?: () => void;
   onSelectView?: (view: "kanban" | "list" | "calendar" | "trash") => void;
@@ -26,14 +29,34 @@ interface CommandPaletteProps {
 }
 
 export function CommandPalette({
+  isOpen: externalOpen,
+  onClose,
+  onOpenChange,
   onNewTaskClick,
   onNewProjectClick,
   onSelectView,
   projects = [],
   onSelectProject,
 }: CommandPaletteProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const { setTheme } = useTheme();
+
+  useEffect(() => {
+    if (externalOpen !== undefined) {
+      setInternalOpen(externalOpen);
+    }
+  }, [externalOpen]);
+
+  const setOpen = (val: boolean | ((prev: boolean) => boolean)) => {
+    setInternalOpen((prev) => {
+      const next = typeof val === "function" ? val(prev) : val;
+      onOpenChange?.(next);
+      if (!next && onClose) onClose();
+      return next;
+    });
+  };
+
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {

@@ -149,20 +149,10 @@ export function DashboardClient({
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AppHeader
         user={localUser}
-        projects={projects}
-        activeProjectId={activeProjectId}
-        onSelectProject={(id) => {
-          setActiveProjectId(id);
-          setActiveView("kanban");
-        }}
-        activeView={activeView}
-        onSelectView={setActiveView}
+        activeProject={activeProject}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
-        onOpenNewProject={() => setIsNewProjectOpen(true)}
         onQuickNewTask={handleQuickNewTask}
-        isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={handleToggleSidebar}
       />
 
       <OfflineIndicator />
