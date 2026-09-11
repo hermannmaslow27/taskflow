@@ -17,7 +17,8 @@ import { ProjectSettingsModal } from "./project-settings-modal";
 import { usePrompt, useConfirm } from "./dialogs";
 import { getTasksAction, createTaskAction } from "@/actions/tasks";
 import { getProjectsAction, deleteProjectAction } from "@/actions/projects";
-import { Plus } from "lucide-react";
+import { getProjectMembersAction } from "@/actions/members";
+import { Plus, Users } from "lucide-react";
 import { syncEngine } from "@/lib/sync-client";
 
 interface DashboardClientProps {
@@ -43,6 +44,8 @@ export function DashboardClient({
   const [tasks, setTasks] = useState<any[]>([]);
   const [deletedTasks, setDeletedTasks] = useState<any[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskDetailData | null>(null);
+  const [projectMembers, setProjectMembers] = useState<any[]>([]);
+  const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null);
 
   // Modals
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
@@ -94,9 +97,24 @@ export function DashboardClient({
     }
   }, []);
 
+  const fetchMembers = useCallback(async () => {
+    if (!activeProjectId) return;
+    try {
+      const res = await getProjectMembersAction(activeProjectId);
+      if (res.success && res.data) setProjectMembers(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [activeProjectId]);
+
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  useEffect(() => {
+    fetchMembers();
+    setAssigneeFilter(null);
+  }, [fetchMembers]);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
@@ -195,6 +213,53 @@ export function DashboardClient({
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Assignee quick filter */}
+                {projectMembers.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setAssigneeFilter(null)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition cursor-pointer ${
+                        assigneeFilter === null
+                          ? "bg-primary text-white shadow-sm shadow-primary/30"
+                          : "bg-muted-bg text-muted hover:text-card-foreground"
+                      }`}
+                    >
+                      Tous
+                    </button>
+                    <button
+                      onClick={() => setAssigneeFilter(localUser.id)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition cursor-pointer ${
+                        assigneeFilter === localUser.id
+                          ? "bg-primary text-white shadow-sm shadow-primary/30"
+                          : "bg-muted-bg text-muted hover:text-card-foreground"
+                      }`}
+                    >
+                      Mes tâches
+                    </button>
+                    {projectMembers
+                      .filter((m) => m.userId !== localUser.id)
+                      .slice(0, 4)
+                      .map((m) => (
+                        <button
+                          key={m.userId}
+                          title={m.user.name || m.user.email || ""}
+                          onClick={() => setAssigneeFilter(assigneeFilter === m.userId ? null : m.userId)}
+                          className={`w-7 h-7 rounded-full text-[10px] font-bold flex items-center justify-center transition cursor-pointer ring-2 ${
+                            assigneeFilter === m.userId
+                              ? "ring-primary bg-primary text-white"
+                              : "ring-card-border bg-muted-bg text-muted hover:ring-primary/50"
+                          }`}
+                        >
+                          {m.user.image ? (
+                            <img src={m.user.image} alt={m.user.name || ""} className="w-7 h-7 rounded-full object-cover" />
+                          ) : (
+                            (m.user.name || m.user.email || "?").charAt(0).toUpperCase()
+                          )}
+                        </button>
+                      ))}
+                  </div>
+                )}
+
                 <button
                   onClick={handleQuickNewTask}
                   className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-md shadow-primary/20 transition cursor-pointer"
@@ -208,13 +273,28 @@ export function DashboardClient({
 
           <div className="flex-1">
             {activeView === "kanban" && (
-              <KanbanView tasks={tasks} projectId={activeProjectId} onTaskClick={(t) => setSelectedTask(t)} onTasksChange={fetchTasks} />
+              <KanbanView
+                tasks={assigneeFilter ? tasks.filter((t) => t.assigneeId === assigneeFilter) : tasks}
+                projectId={activeProjectId}
+                onTaskClick={(t) => setSelectedTask(t)}
+                onTasksChange={fetchTasks}
+              />
             )}
             {activeView === "list" && (
-              <ListView tasks={tasks} projectId={activeProjectId} onTaskClick={(t) => setSelectedTask(t)} onTasksChange={fetchTasks} />
+              <ListView
+                tasks={assigneeFilter ? tasks.filter((t) => t.assigneeId === assigneeFilter) : tasks}
+                projectId={activeProjectId}
+                onTaskClick={(t) => setSelectedTask(t)}
+                onTasksChange={fetchTasks}
+              />
             )}
             {activeView === "calendar" && (
-              <CalendarView tasks={tasks} projectId={activeProjectId} onTaskClick={(t) => setSelectedTask(t)} onTasksChange={fetchTasks} />
+              <CalendarView
+                tasks={assigneeFilter ? tasks.filter((t) => t.assigneeId === assigneeFilter) : tasks}
+                projectId={activeProjectId}
+                onTaskClick={(t) => setSelectedTask(t)}
+                onTasksChange={fetchTasks}
+              />
             )}
             {activeView === "trash" && (
               <TrashView deletedTasks={deletedTasks} projectId={activeProjectId} onTasksChange={fetchTasks} />
@@ -227,6 +307,7 @@ export function DashboardClient({
         <TaskDetailModal
           task={selectedTask}
           availableTags={activeProject?.tags || []}
+          projectMembers={projectMembers}
           onClose={() => setSelectedTask(null)}
           onTaskUpdated={fetchTasks}
           currentUserId={localUser.id}
@@ -246,7 +327,10 @@ export function DashboardClient({
         isOpen={isInviteMemberOpen}
         projectId={activeProjectId}
         onClose={() => setIsInviteMemberOpen(false)}
-        onMemberInvited={fetchProjects}
+        onMemberInvited={() => {
+          fetchProjects();
+          fetchMembers();
+        }}
       />
 
       <CommandPalette
@@ -277,6 +361,11 @@ export function DashboardClient({
         onClose={() => setProjectSettingsId(null)}
         project={projects.find((p) => p.id === projectSettingsId) ?? null}
         currentUserId={localUser.id}
+        onMembersChanged={fetchMembers}
+        onInviteClick={() => {
+          setProjectSettingsId(null);
+          setIsInviteMemberOpen(true);
+        }}
       />
 
       {/* Custom dialogs */}

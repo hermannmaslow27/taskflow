@@ -19,6 +19,7 @@ import {
   Eye,
   Edit3,
   Paperclip,
+  UserCheck,
 } from "lucide-react";
 import { updateTaskAction, deleteTaskAction } from "@/actions/tasks";
 import { createSubtaskAction, toggleSubtaskAction, deleteSubtaskAction } from "@/actions/subtasks";
@@ -86,6 +87,13 @@ export interface TaskDetailData {
   priority: "low" | "medium" | "high" | "urgent";
   status: "backlog" | "todo" | "in_progress" | "in_review" | "done";
   recurrenceRule?: string | null;
+  assigneeId?: string | null;
+  assignee?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  } | null;
   subtasks?: SubtaskItem[];
   tags?: TagItem[];
   comments?: CommentItem[];
@@ -94,6 +102,16 @@ export interface TaskDetailData {
 interface TaskDetailModalProps {
   task: TaskDetailData | null;
   availableTags?: TagItem[];
+  projectMembers?: Array<{
+    userId: string;
+    role: string;
+    user: {
+      id: string;
+      name?: string | null;
+      email: string;
+      image?: string | null;
+    };
+  }>;
   onClose: () => void;
   onTaskUpdated?: () => void;
   currentUserId?: string;
@@ -102,6 +120,7 @@ interface TaskDetailModalProps {
 export function TaskDetailModal({
   task,
   availableTags = [],
+  projectMembers = [],
   onClose,
   onTaskUpdated,
   currentUserId = "",
@@ -113,6 +132,7 @@ export function TaskDetailModal({
   const [previewMarkdown, setPreviewMarkdown] = useState(false);
   const [priority, setPriority] = useState(task.priority);
   const [status, setStatus] = useState(task.status);
+  const [assigneeId, setAssigneeId] = useState<string | null>(task.assigneeId || null);
   const [dueDate, setDueDate] = useState<string>(
     task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] ?? "" : ""
   );
@@ -154,6 +174,7 @@ export function TaskDetailModal({
         descriptionMd,
         priority,
         status,
+        assigneeId: assigneeId || null,
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
         dueTime: dueTime || null,
         recurrenceRule: recurrenceRule || null,
@@ -376,6 +397,48 @@ export function TaskDetailModal({
                 size="sm"
               />
             </div>
+
+            {/* Assignee */}
+            {projectMembers.length > 0 && (
+              <div className="sm:col-span-2 lg:col-span-4">
+                <label className="text-xs font-medium text-muted block mb-2 flex items-center gap-1">
+                  <UserCheck className="w-3 h-3" />
+                  Assigné à
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setAssigneeId(null)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer border ${
+                      assigneeId === null
+                        ? "bg-primary/15 border-primary/40 text-primary"
+                        : "bg-muted-bg border-card-border text-muted hover:text-card-foreground"
+                    }`}
+                  >
+                    Non assigné
+                  </button>
+                  {projectMembers.map((m) => (
+                    <button
+                      key={m.userId}
+                      onClick={() => setAssigneeId(assigneeId === m.userId ? null : m.userId)}
+                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer border ${
+                        assigneeId === m.userId
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "bg-muted-bg border-card-border text-muted hover:text-card-foreground"
+                      }`}
+                    >
+                      {m.user.image ? (
+                        <img src={m.user.image} alt={m.user.name || ""} className="w-5 h-5 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex items-center justify-center">
+                          {(m.user.name || m.user.email || "?").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      {m.user.name || m.user.email}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Description (Markdown with Live Sanitize Preview) */}
