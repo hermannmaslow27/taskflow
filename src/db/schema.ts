@@ -201,6 +201,22 @@ export const activityLogs = pgTable(
   ]
 );
 
+// 10. Password Reset Tokens Table (OTP)
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull(),
+    otp: text("otp").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_password_reset_tokens_email").on(table.email),
+    index("idx_password_reset_tokens_otp").on(table.otp),
+  ]
+);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   ownedProjects: many(projects),
@@ -325,3 +341,4 @@ export type Tag = typeof tags.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Attachment = typeof attachments.$inferSelect;
 export type ActivityLog = typeof activityLogs.$inferSelect;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

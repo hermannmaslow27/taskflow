@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, projects, projectMembers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyPassword } from "@/lib/password";
 import { loginSchema } from "@/lib/validations/auth";
@@ -21,10 +21,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID || "placeholder",
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "placeholder",
+      allowDangerousEmailAccountLinking: true,
     }),
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "placeholder",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "placeholder",
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       name: "Credentials",
@@ -68,6 +70,57 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login",
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "github" || account?.provider === "google") {
+        const email = user.email?.toLowerCase();
+        if (!email) return false;
+
+        try {
+          const existing = await db.query.users.findFirst({
+            where: eq(users.email, email),
+          });
+
+          if (existing) {
+            user.id = existing.id;
+            const updateFields: { image?: string; name?: string } = {};
+            if (!existing.image && user.image) updateFields.image = user.image;
+            if (!existing.name && user.name) updateFields.name = user.name;
+            if (Object.keys(updateFields).length > 0) {
+              await db.update(users).set(updateFields).where(eq(users.id, existing.id));
+            }
+          } else {
+            const newUserId = crypto.randomUUID();
+            await db.insert(users).values({
+              id: newUserId,
+              name: user.name || "Utilisateur",
+              email: email,
+              image: user.image || null,
+            });
+            user.id = newUserId;
+
+            // Create default project
+            const defaultProjectId = crypto.randomUUID();
+            await db.insert(projects).values({
+              id: defaultProjectId,
+              name: "Mon premier projet",
+              color: "#6366F1",
+              ownerId: newUserId,
+            });
+
+            await db.insert(projectMembers).values({
+              projectId: defaultProjectId,
+              userId: newUserId,
+              role: "owner",
+            });
+          }
+          return true;
+        } catch (err) {
+          console.error("OAuth signIn error:", err);
+          return true;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

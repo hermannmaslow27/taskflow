@@ -9,6 +9,7 @@ import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import { registerAction } from "@/actions/auth";
 import { signIn } from "next-auth/react";
 import { CheckCircle2, Lock, Mail, User, ArrowRight } from "lucide-react";
+import { SocialAuthButtons } from "@/components/social-auth-buttons";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -80,6 +81,9 @@ export default function RegisterPage() {
             <span>{errorMsg}</span>
           </div>
         )}
+
+        {/* Social Logins */}
+        <SocialAuthButtons callbackUrl="/dashboard" />
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>

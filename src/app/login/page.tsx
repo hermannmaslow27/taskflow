@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { signIn } from "next-auth/react";
 import { CheckCircle2, Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
+import { SocialAuthButtons } from "@/components/social-auth-buttons";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -71,6 +72,9 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* Social Logins */}
+        <SocialAuthButtons callbackUrl="/dashboard" />
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="text-xs font-semibold text-muted block mb-1.5 uppercase tracking-wider">
@@ -91,9 +95,17 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-muted block mb-1.5 uppercase tracking-wider">
-              Mot de passe (Argon2)
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                Mot de passe
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-semibold text-primary hover:underline cursor-pointer"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-muted absolute left-3.5 top-3" />
               <input
