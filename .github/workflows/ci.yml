@@ -1,0 +1,67 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Vitest unit tests
+        run: pnpm test
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/taskflow_test"
+          AUTH_SECRET: "dummy_auth_secret_for_tests_32_chars"
+          NEXTAUTH_URL: "http://localhost:3000"
+
+      - name: Run TypeScript type check & Next.js Build
+        run: pnpm build
+        env:
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/taskflow_test"
+          AUTH_SECRET: "dummy_auth_secret_for_build_32_chars"
+          NEXTAUTH_URL: "https://taskflow.laslow.site"
+          RESEND_API_KEY: "dummy_resend_key"
+          EMAIL_FROM: "assistance@taskflow.laslow.site"
+          GITHUB_CLIENT_ID: "dummy_github_client_id"
+          GITHUB_CLIENT_SECRET: "dummy_github_client_secret"
+          GOOGLE_CLIENT_ID: "dummy_google_client_id"
+          GOOGLE_CLIENT_SECRET: "dummy_google_client_secret"
+          INNGEST_EVENT_KEY: "dummy_inngest_event_key"
+          INNGEST_SIGNING_KEY: "dummy_inngest_signing_key"
+          CLOUDINARY_CLOUD_NAME: "dummy_cloud"
+          CLOUDINARY_API_KEY: "dummy_api_key"
+          CLOUDINARY_API_SECRET: "dummy_api_secret"
